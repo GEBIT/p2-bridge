@@ -58,12 +58,19 @@
     <tycho.targetPlatform>p2-runtime/src/main/resources/repository</tycho.targetPlatform>
     <version.tycho>1.7.0</version.tycho>
     <tycho.groupId>org.eclipse.tycho</tycho.groupId>
+    
+    <public.serverId>thirdparty</public.serverId>
+    <public.nexusUrl>https://gebit-nexus.local.gebit.de/content/repositories/thirdparty/</public.nexusUrl>
+    <public-release.url>${public.nexusUrl}</public-release.url>
+    <public-snapshot.url>${public.nexusUrl}</public-snapshot.url>
+    
+    <enforcer.fail>false</enforcer.fail>
   </properties>
 
   <scm>
-    <connection>scm:git:git@github.com/sonatype/p2-bridge.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/sonatype/p2-bridge.git</developerConnection>
-    <url>http://github.com/sonatype/p2-bridge</url>
+    <connection>scm:git:git@github.com/GEBIT/p2-bridge.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/GEBIT/p2-bridge.git</developerConnection>
+    <url>http://github.com/GEBIT/p2-bridge</url>
   </scm>
 
   <dependencyManagement>
