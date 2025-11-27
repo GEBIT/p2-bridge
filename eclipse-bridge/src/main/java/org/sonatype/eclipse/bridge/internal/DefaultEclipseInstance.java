@@ -7,8 +7,9 @@
  */
 package org.sonatype.eclipse.bridge.internal;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.InputStream;
-import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -20,17 +21,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.sonatype.eclipse.bridge.EclipseInstance;
 import org.sonatype.eclipse.bridge.EclipseLocation;
-
-import org.eclipse.core.runtime.adaptor.EclipseStarter;
-import org.eclipse.osgi.framework.internal.core.FrameworkProperties;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+import org.sonatype.eclipse.bridge.internal.util.EclipseStarterWithOwnClassLoader;
 
 class DefaultEclipseInstance
     implements EclipseInstance
 {
     private EclipseInstance state;
+    
+    private EclipseStarterWithOwnClassLoader eclipseStarter;
 
     private final EclipseLocation location;
 
@@ -40,11 +38,30 @@ class DefaultEclipseInstance
     {
         this.location = location;
 
+        File[] runtimeJars = getEclipsePluginJars();
+		try {
+			this.eclipseStarter = new EclipseStarterWithOwnClassLoader(runtimeJars);
+		} catch (Exception e) {
+			// TODO
+			throw new IllegalStateException(e);
+		}
+
         state = new Stopped();
         eclipseLock = new ReentrantLock( true );
     }
 
-    @Override
+    private File[] getEclipsePluginJars() {
+    	File runtimeDir = new File(location.get(), "plugins");
+    	File[] jars = runtimeDir.listFiles(new FilenameFilter() {
+    	    @Override
+    	    public boolean accept(File dir, String name) {
+    	        return name.endsWith(".jar");
+    	    }
+    	});
+		return jars;
+	}
+
+	@Override
     public <T> T getService( final Class<T> serviceType )
     {
         return state.getService( serviceType );
@@ -80,11 +97,17 @@ class DefaultEclipseInstance
         return state.start( launchProperties );
     }
 
+    @Override
+    public EclipseInstance start( final Map<String, String> launchProperties, String[] args )
+    {
+        return state.start( launchProperties, args );
+    }
+
     private class Started
         implements EclipseInstance
     {
 
-        private final Map<WeakReference<?>, ServiceReference> activeServices;
+        private final Map<WeakReference<?>, Object> activeServices;
 
         private final ReferenceQueue<Object> staleReferences;
 
@@ -94,7 +117,7 @@ class DefaultEclipseInstance
 
         public Started()
         {
-            activeServices = new HashMap<WeakReference<?>, ServiceReference>();
+            activeServices = new HashMap<WeakReference<?>, Object>();
             staleReferences = new ReferenceQueue<Object>();
             lock = new ReentrantReadWriteLock();
             cleanupThread = new Thread( new Cleanup(), "Stale Eclipse services cleanup" );
@@ -111,14 +134,13 @@ class DefaultEclipseInstance
                 {
                     throw new RuntimeException( "Eclipse instance is now longer valid" );
                 }
-                final BundleContext bundleContext = EclipseStarter.getSystemBundleContext();
-                final ServiceReference serviceReference = bundleContext.getServiceReference( serviceType.getName() );
+                final Object serviceReference = eclipseStarter.getServiceReference( serviceType );
                 if ( serviceReference == null )
                 {
                     throw new IllegalStateException( String.format( "There is no service available of type %s",
                         serviceType ) );
                 }
-                final T service = serviceType.cast( bundleContext.getService( serviceReference ) );
+                final T service = eclipseStarter.getService( serviceReference, serviceType );
                 if ( service == null )
                 {
                     throw new IllegalStateException( String.format( "There is no service available of type %s",
@@ -143,9 +165,7 @@ class DefaultEclipseInstance
                 {
                     throw new RuntimeException( "Eclipse instance is now longer valid" );
                 }
-                final BundleContext bundleContext = EclipseStarter.getSystemBundleContext();
-                final Bundle bundle = bundleContext.installBundle( location );
-                return bundle.getBundleId();
+                return eclipseStarter.installBundle( location );
             }
             catch ( final Exception e )
             {
@@ -167,9 +187,7 @@ class DefaultEclipseInstance
                 {
                     throw new RuntimeException( "Eclipse instance is now longer valid" );
                 }
-                final BundleContext bundleContext = EclipseStarter.getSystemBundleContext();
-                final Bundle bundle = bundleContext.installBundle( location, inputStream );
-                return bundle.getBundleId();
+                return eclipseStarter.installBundle( location, inputStream );
             }
             catch ( final Exception e )
             {
@@ -191,9 +209,7 @@ class DefaultEclipseInstance
                 {
                     throw new RuntimeException( "Eclipse instance is now longer valid" );
                 }
-                final BundleContext bundleContext = EclipseStarter.getSystemBundleContext();
-                final Bundle bundle = bundleContext.getBundle( id );
-                bundle.start();
+                eclipseStarter.startBundle( id );
             }
             catch ( final Exception e )
             {
@@ -211,7 +227,7 @@ class DefaultEclipseInstance
             try
             {
                 lock.writeLock().lock();
-                EclipseStarter.shutdown();
+                eclipseStarter.shutdown();
                 eclipseLock.unlock();
                 cleanupThread.interrupt();
                 state = new Stopped();
@@ -230,6 +246,12 @@ class DefaultEclipseInstance
         @Override
         public EclipseInstance start( final Map<String, String> launchProperties )
         {
+        	return start(launchProperties, new String[0]);
+        }
+
+        @Override
+        public EclipseInstance start( final Map<String, String> launchProperties, String[] args )
+        {
             return this;
         }
 
@@ -242,9 +264,7 @@ class DefaultEclipseInstance
             {
                 try
                 {
-                    final Reference<? extends Object> obsolete = staleReferences.remove();
-                    final ServiceReference reference = activeServices.remove( obsolete );
-                    EclipseStarter.getSystemBundleContext().ungetService( reference );
+                    eclipseStarter.ungetService(activeServices.remove(staleReferences.remove()));
                 }
                 catch ( final Exception ignore )
                 {
@@ -296,6 +316,12 @@ class DefaultEclipseInstance
         @Override
         public EclipseInstance start( final Map<String, String> launchProperties )
         {
+        	return start(launchProperties, new String[0]);
+        }
+
+        @Override
+        public EclipseInstance start( final Map<String, String> launchProperties, String[] args )
+        {
             try
             {
                 if ( !eclipseLock.tryLock() )
@@ -316,16 +342,11 @@ class DefaultEclipseInstance
 
                 System.setProperty( "osgi.framework.useSystemProperties", "false" );
 
-                // this is a hack to force reset of properties from an eventual previous run
-                FrameworkProperties.setProperties( (Map) System.getProperties() );
-
-                EclipseStarter.setInitialProperties( properties );
-
                 // must backup the TCL as Equinox will set it to its own loader
                 final ClassLoader tcl = Thread.currentThread().getContextClassLoader();
                 try
                 {
-                    EclipseStarter.startup( new String[0], null );
+                	eclipseStarter.startup( args, properties );
                 }
                 finally
                 {

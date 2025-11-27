@@ -24,6 +24,8 @@ public interface EclipseInstance
 
     EclipseInstance start( Map<String, String> launchProperties );
 
+    EclipseInstance start( Map<String, String> launchProperties, String[] args );
+
     EclipseInstance shutdown();
 
     <T> T getService( Class<T> serviceType );

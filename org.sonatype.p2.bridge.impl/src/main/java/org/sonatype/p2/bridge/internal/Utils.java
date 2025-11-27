@@ -22,7 +22,6 @@ import java.util.Iterator;
 import java.util.Random;
 
 import org.eclipse.equinox.internal.p2.core.helpers.FileUtils;
-import org.eclipse.osgi.framework.internal.core.FrameworkProperties;
 
 class Utils
 {
@@ -58,7 +57,7 @@ class Utils
     static File createTempFile( final String prefix, final String suffix, final File parentDir )
     {
         File result;
-        String parent = FrameworkProperties.getProperty( TEMPDIR_PROPERTY );
+        String parent = System.getProperty( TEMPDIR_PROPERTY );
         if ( parent == null )
         {
             parent = System.getProperty( "java.io.tmpdir" );
@@ -93,7 +92,7 @@ class Utils
 
     static URI temporaryAgentLocationFor( final URI location )
     {
-        String parent = FrameworkProperties.getProperty( TEMPDIR_PROPERTY );
+        String parent = System.getProperty( TEMPDIR_PROPERTY );
         if ( parent == null )
         {
             parent = System.getProperty( "java.io.tmpdir" );

@@ -36,8 +36,9 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.sonatype.tycho</groupId>
+                <groupId>${tycho.groupId}</groupId>
                 <artifactId>tycho-maven-plugin</artifactId>
+          		<version>${version.tycho}</version>
                 <extensions>true</extensions>
             </plugin>
         </plugins>

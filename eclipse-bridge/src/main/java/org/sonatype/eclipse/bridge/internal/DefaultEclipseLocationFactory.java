@@ -11,7 +11,6 @@ import java.io.File;
 import java.net.URI;
 
 import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
 import org.sonatype.eclipse.bridge.EclipseLocation;
 import org.sonatype.eclipse.bridge.EclipseLocationFactory;
 

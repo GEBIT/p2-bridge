@@ -14,11 +14,13 @@
 
     <parent>
         <groupId>org.sonatype.p2.bridge</groupId>
-        <artifactId>p2-bridge-aggregator</artifactId>
+        <artifactId>p2-bridge-tycho-config</artifactId>
         <version>1.1.9-SNAPSHOT</version>
+        <relativePath>../p2-bridge-tycho-config</relativePath>
     </parent>
 
     <artifactId>org.sonatype.p2.bridge.model</artifactId>
+    <packaging>eclipse-plugin</packaging>
 
     <name>P2 Bridge :: Model</name>
 
@@ -61,31 +63,31 @@
         </plugins>
     </build>
 
-    <profiles>
-        <profile>
-            <id>m2e</id>
-            <activation>
-                <property>
-                    <name>m2e.version</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.maven.ide.eclipse</groupId>
-                        <artifactId>lifecycle-mapping</artifactId>
-                        <configuration>
-                            <mappingId>customizable</mappingId>
-                            <configurators>
-                                <configurator id="org.maven.ide.eclipse.jdt.javaConfigurator"/>
-                                <configurator id="org.maven.ide.eclipse.modello.modelloConfigurator"/>
-                            </configurators>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+<!--     <profiles> -->
+<!--         <profile> -->
+<!--             <id>m2e</id> -->
+<!--             <activation> -->
+<!--                 <property> -->
+<!--                     <name>m2e.version</name> -->
+<!--                 </property> -->
+<!--             </activation> -->
+<!--             <build> -->
+<!--                 <plugins> -->
+<!--                     <plugin> -->
+<!--                         <groupId>org.maven.ide.eclipse</groupId> -->
+<!--                         <artifactId>lifecycle-mapping</artifactId> -->
+<!--                         <configuration> -->
+<!--                             <mappingId>customizable</mappingId> -->
+<!--                             <configurators> -->
+<!--                                 <configurator id="org.maven.ide.eclipse.jdt.javaConfigurator"/> -->
+<!--                                 <configurator id="org.maven.ide.eclipse.modello.modelloConfigurator"/> -->
+<!--                             </configurators> -->
+<!--                         </configuration> -->
+<!--                     </plugin> -->
+<!--                 </plugins> -->
+<!--             </build> -->
+<!--         </profile> -->
+<!--     </profiles> -->
 
 </project>
 
