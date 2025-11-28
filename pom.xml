@@ -105,9 +105,9 @@
         <version>3.7.0.v20110524</version>
       </dependency>
       <dependency>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-archiver</artifactId>
-        <version>1.0-alpha-12</version>
+        <groupId>org.zeroturnaround</groupId>
+        <artifactId>zt-zip</artifactId>
+        <version>1.7</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.plexus</groupId>
